@@ -1,0 +1,4 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/williamblair/videos/media/videos/lorenz/480p15/partial_movie_files/LorenzAttractor/3176121028_4287902802_1170217266.mp4'
+file 'file:/Users/williamblair/videos/media/videos/lorenz/480p15/partial_movie_files/LorenzAttractor/1618817009_3638764610_4053560013.mp4'
+file 'file:/Users/williamblair/videos/media/videos/lorenz/480p15/partial_movie_files/LorenzAttractor/4282608846_4268215521_2030569338.mp4'

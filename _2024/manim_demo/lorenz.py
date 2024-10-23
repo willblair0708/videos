@@ -1,4 +1,4 @@
-from manim_imports_ext import *
+from manim import *
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
 
@@ -21,33 +21,27 @@ def ode_solution_points(function, state0, time, dt=0.01):
     return solution.y.T
 
 
-def for_later():
-    tail = VGroup(
-        TracingTail(dot, time_traced=3).match_color(dot)
-        for dot in dots
-    )
-
-
-class LorenzAttractor(InteractiveScene):
+class LorenzAttractor(ThreeDScene):
     def construct(self):
         # Set up axes
         axes = ThreeDAxes(
             x_range=(-50, 50, 5),
             y_range=(-50, 50, 5),
             z_range=(-0, 50, 5),
-            width=16,
-            height=16,
-            depth=8,
+            x_length=16,
+            y_length=16,
+            z_length=8,
         )
-        axes.set_width(FRAME_WIDTH)
+        axes.set_width(config.frame_width)
         axes.center()
 
-        self.frame.reorient(43, 76, 1, IN, 10)
-        self.frame.add_updater(lambda m, dt: m.increment_theta(dt * 3 * DEGREES))
+        # Set up camera
+        self.set_camera_orientation(phi=43*DEGREES, theta=76*DEGREES)
+        self.begin_ambient_camera_rotation(rate=0.3)
         self.add(axes)
 
         # Add the equations
-        equations = Tex(
+        equations = MathTex(
             R"""
             \begin{aligned}
             \frac{\mathrm{d} x}{\mathrm{~d} t} & =\sigma(y-x) \\
@@ -55,16 +49,15 @@ class LorenzAttractor(InteractiveScene):
             \frac{\mathrm{d} z}{\mathrm{~d} t} & =x y-\beta z
             \end{aligned}
             """,
-            t2c={
-                "x": RED,
-                "y": GREEN,
-                "z": BLUE,
-            },
             font_size=30
         )
-        equations.fix_in_frame()
+        equations.set_color_by_tex_to_color_map({
+            "x": RED,
+            "y": GREEN,
+            "z": BLUE,
+        })
         equations.to_corner(UL)
-        equations.set_backstroke()
+        self.add_fixed_in_frame_mobjects(equations)
         self.play(Write(equations))
 
         # Compute a set of solutions
@@ -80,37 +73,33 @@ class LorenzAttractor(InteractiveScene):
         curves = VGroup()
         for state, color in zip(states, colors):
             points = ode_solution_points(lorenz_system, state, evolution_time)
-            curve = VMobject().set_points_smoothly(axes.c2p(*points.T))
+            curve = VMobject()
+            curve.set_points_smoothly([
+                axes.c2p(*point) for point in points
+            ])
             curve.set_stroke(color, 1, opacity=0.25)
             curves.add(curve)
 
         curves.set_stroke(width=2, opacity=1)
 
         # Display dots moving along those trajectories
-        dots = Group(GlowDot(color=color, radius=0.25) for color in colors)
+        dots = VGroup(*[Dot(color=color, radius=0.1).set_stroke(BLACK, 1) for color in colors])
 
-        def update_dots(dots, curves=curves):
+        def update_dots(dots):
             for dot, curve in zip(dots, curves):
                 dot.move_to(curve.get_end())
+            return dots
 
         dots.add_updater(update_dots)
-
-        tail = VGroup(
-            TracingTail(dot, time_traced=3).match_color(dot)
-            for dot in dots
-        )
-
         self.add(dots)
-        self.add(tail)
+
+        # Animate the curves
         curves.set_opacity(0)
         self.play(
-            *(
-                ShowCreation(curve, rate_func=linear)
-                for curve in curves
-            ),
+            *[Create(curve, rate_func=linear) for curve in curves],
             run_time=evolution_time,
         )
+        self.wait()
 
 
-class EndScreen(PatreonEndScreen):
     pass
